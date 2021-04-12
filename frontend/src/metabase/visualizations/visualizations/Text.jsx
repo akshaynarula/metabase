@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { Component } from "react";
 import ReactMarkdown from "react-markdown";
+import styled, { css } from "styled-components";
 import styles from "./Text.css";
 
 import Icon from "metabase/components/Icon";
@@ -38,6 +39,7 @@ export default class Text extends Component {
     this.state = {
       isShowingRenderedOutput: false,
       text: "",
+      showActions: false
     };
   }
 
@@ -121,6 +123,18 @@ export default class Text extends Component {
     this.setState({ isShowingRenderedOutput: true });
   }
 
+  onMouseEnter = () => {
+    this.setState({
+      showActions: true
+    });
+  }
+
+  onMouseLeave = () => {
+    this.setState({
+      showActions: false
+    });
+  }
+
   render() {
     const {
       className,
@@ -134,6 +148,9 @@ export default class Text extends Component {
     if (isEditing) {
       return (
         <div
+          onMouseEnter={this.onMouseEnter}
+          onMouseLeave={this.onMouseLeave}
+          style={{ position: "relative" }}
           className={cx(
             className,
             styles.Text,
@@ -142,6 +159,7 @@ export default class Text extends Component {
           )}
         >
           <TextActionButtons
+            isHidden={!this.state.showActions}
             actionButtons={actionButtons}
             isShowingRenderedOutput={this.state.isShowingRenderedOutput}
             onEdit={this.onEdit.bind(this)}
@@ -184,7 +202,7 @@ export default class Text extends Component {
         >
           <ReactMarkdown
             className={cx(
-              "full flex-full flex flex-column text-card-markdown",
+              // "full flex-full flex flex-column text-card-markdown",
               styles["text-card-markdown"],
               getSettingsStyle(settings),
             )}
@@ -196,61 +214,66 @@ export default class Text extends Component {
   }
 }
 
+const ActionsPanel = styled.div`
+  position: absolute;
+  background: white;
+  transform: translateY(-100%);
+  top: 0;
+  right: 0;
+  border-radius: 8px;
+  box-shadow: 0px 1px 3px rgb(0 0 0 / 13%);
+  transition: opacity 300ms;
+
+  ${props =>
+    props.isHidden
+      ? css`
+          opacity: 0;
+          pointer-events: none;
+        `
+      : css`
+          opacity: 1;
+        `}
+`;
+
 const TextActionButtons = ({
+  isHidden,
   actionButtons,
   isShowingRenderedOutput,
   onEdit,
   onPreview,
 }) => (
-  <div className="Card-title">
-    <div className="absolute top left p1 px2">
-      <span
-        className="DashCard-actions-persistent flex align-center"
-        style={{ lineHeight: 1 }}
-      >
-        <a
-          data-metabase-event={"Dashboard;Text;edit"}
-          className={cx(
-            "cursor-pointer h3 flex-no-shrink relative mr1 drag-disabled",
-            {
-              "text-light text-medium-hover": isShowingRenderedOutput,
-              "text-brand": !isShowingRenderedOutput,
-            },
-          )}
-          onClick={onEdit}
-          style={HEADER_ACTION_STYLE}
+  <ActionsPanel isHidden={isHidden}>
+    <div className="Card-title">
+      <div>
+        <span
+          className="DashCard-actions-persistent flex align-center"
+          style={{ lineHeight: 1 }}
         >
-          <span className="flex align-center">
-            <span className="flex">
-              <Icon
-                name="edit_document"
-                style={{ top: 0, left: 0 }}
-                size={HEADER_ICON_SIZE}
-              />
+          <a
+            data-metabase-event={"Dashboard;Text;edit"}
+            className={cx(
+              "cursor-pointer h3 flex-no-shrink relative mr1 drag-disabled text-light",
+            )}
+            onClick={isShowingRenderedOutput ? onEdit : onPreview}
+            style={HEADER_ACTION_STYLE}
+          >
+            <span className="flex align-center">
+              {actionButtons}
+              <span className="ml1">
+                {isShowingRenderedOutput ? (
+                  <Icon
+                    name="edit_document"
+                    style={{ top: 0, left: 0 }}
+                    size={HEADER_ICON_SIZE}
+                  />
+                ) : (
+                  <Icon name="eye" style={{ top: 0, left: 0 }} size={20} />
+                )}
+              </span>
             </span>
-          </span>
-        </a>
-
-        <a
-          data-metabase-event={"Dashboard;Text;preview"}
-          className={cx(
-            "cursor-pointer h3 flex-no-shrink relative mr1 drag-disabled",
-            {
-              "text-light text-medium-hover": !isShowingRenderedOutput,
-              "text-brand": isShowingRenderedOutput,
-            },
-          )}
-          onClick={onPreview}
-          style={HEADER_ACTION_STYLE}
-        >
-          <span className="flex align-center">
-            <span className="flex">
-              <Icon name="eye" style={{ top: 0, left: 0 }} size={20} />
-            </span>
-          </span>
-        </a>
-      </span>
+          </a>
+        </span>
+      </div>
     </div>
-    <div className="absolute top right p1 px2">{actionButtons}</div>
-  </div>
+  </ActionsPanel>
 );
